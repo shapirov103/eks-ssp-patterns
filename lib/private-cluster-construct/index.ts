@@ -39,5 +39,3 @@ export default class PrivateClusterConstruct extends cdk.Construct {
         });
     }
 }
-
-
