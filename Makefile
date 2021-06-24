@@ -23,6 +23,9 @@ list:
 mkdocs:
 	mkdocs serve 
 
+synth: 
+	$(CDK) synth	
+
 bootstrap:
 	@for LIB in $(HOMEBREW_LIBS) ; do \
 		LIB=$$LIB make check-lib ; \
