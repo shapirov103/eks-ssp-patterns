@@ -18,7 +18,7 @@ export default class PipelineStack extends cdk.Stack {
                 region: 'us-west-1',
             }
         })
-        pipeline.addApplicationStage(dev,)
+        pipeline.addApplicationStage(dev)
 
         const test = new ClusterStage(this, 'blueprint-stage-test', {
             env: {
@@ -26,7 +26,7 @@ export default class PipelineStack extends cdk.Stack {
                 region: 'us-west-2',
             }
         })
-        pipeline.addApplicationStage(test,)
+        pipeline.addApplicationStage(test)
 
         // Manual approvals for Prod deploys.
         const prod = new ClusterStage(this, 'blueprint-stage-prod', {
