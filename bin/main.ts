@@ -53,5 +53,9 @@ new BottleRocketConstruct(app, 'bottlerocket');
 import CustomClusterConstruct from '../lib/custom-cluster-construct'
 new CustomClusterConstruct(app, 'custom-cluster');
 
+//-------------------------------------------
+// Private cluster.
+//-------------------------------------------
 
-
+import PrivateClusterConstruct from '../lib/private-cluster-construct'
+new PrivateClusterConstruct(app, 'private-cluster');
