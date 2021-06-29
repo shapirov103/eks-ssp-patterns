@@ -24,12 +24,14 @@ export default class MultiTeamConstruct extends cdk.Construct {
 
         // AddOns for the cluster.
         const addOns: Array<ssp.ClusterAddOn> = [
+            new ssp.AppMeshAddOn,
             new ssp.NginxAddOn,
             new ssp.ArgoCDAddOn,
             new ssp.CalicoAddOn,
             new ssp.MetricsServerAddOn,
             new ssp.ClusterAutoScalerAddOn,
             new ssp.ContainerInsightsAddOn,
+            new ssp.XrayAddOn
         ];
 
         const stackID = `${id}-blueprint`

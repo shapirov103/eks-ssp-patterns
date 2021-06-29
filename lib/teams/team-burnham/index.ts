@@ -15,7 +15,10 @@ export class TeamBurnhamSetup extends ApplicationTeam {
     constructor(scope: Construct) {
         super({
             name: "burnham",
-            users: getUserArns(scope, "team-burnham.users")
+            users: getUserArns(scope, "team-burnham.users"),
+            namespaceAnnotations: {
+                "appmesh.k8s.aws/sidecarInjectorWebhook": "enabled"
+            }
         });
     }
 }
