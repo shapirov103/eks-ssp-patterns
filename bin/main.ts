@@ -26,6 +26,8 @@ new MultiRegionConstruct(app, 'multi-region');
 import FargateConstruct from '../lib/fargate-construct'
 new FargateConstruct(app, 'fargate');
 
+import NginxIngressConstruct from '../lib/nginx-ingress-construct';
+new NginxIngressConstruct(app, "nginx");
 
 //-------------------------------------------
 // Multiple clusters with deployment pipeline.
