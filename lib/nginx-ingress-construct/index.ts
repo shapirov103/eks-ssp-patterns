@@ -11,14 +11,15 @@ import * as route53 from '@aws-cdk/aws-route53';
 import * as team from '../teams'
 import { valueFromContext } from '@shapirov/cdk-eks-blueprint/dist/utils/context-utils';
 import { Stack } from '@aws-cdk/core';
+import { ClusterInfo, EksBlueprint } from '@shapirov/cdk-eks-blueprint';
 
 const accountID = process.env.CDK_DEFAULT_ACCOUNT!;
 
 
-export default class NginxIngressConstruct extends ssp.EksBlueprint {
+export default class NginxIngressConstruct extends cdk.Construct {
 
     constructor(scope: cdk.Construct, id: string) {
-
+        super(scope, id);
         // Teams for the cluster.
         const teams: Array<ssp.Team> = [
             new team.TeamPlatform(accountID),
@@ -27,12 +28,14 @@ export default class NginxIngressConstruct extends ssp.EksBlueprint {
             new team.TeamBurnhamSetup(scope)
         ];
 
-        const subZoneName = valueFromContext(scope, "dev.subzone", "dev.some.example.com");
+        const subZoneName = valueFromContext(scope, "dev.sub-zone.name", "dev.some.example.com");
         // AddOns for the cluster.
         const addOns: Array<ssp.ClusterAddOn> = [
             new ssp.AwsLoadBalancerControllerAddOn,
             new ssp.addons.ExternalDnsAddon({
-                hostedZones: [route53.HostedZone.fromLookup(scope, "dns-sub-zone", { domainName: subZoneName })]
+                hostedZone: (clusterInfo: ClusterInfo) => {
+                    return [route53.HostedZone.fromLookup(clusterInfo.cluster.stack, "dns-sub-zone", { domainName: subZoneName })];
+                }  
             }),
             new ssp.NginxAddOn({ internetFacing: true, backendProtocol: "tcp", externaDnsHostname: subZoneName }),
             new ssp.ArgoCDAddOn,
@@ -43,8 +46,9 @@ export default class NginxIngressConstruct extends ssp.EksBlueprint {
         ];
 
         const stackID = `${id}-blueprint`;
-        super(scope, { id: stackID, addOns, teams }, {
+        new EksBlueprint(scope, { id: stackID, addOns, teams }, {
             env: {
+                account: process.env.CDK_DEFAULT_ACCOUNT,
                 region: 'us-west-1',
             },
         });
