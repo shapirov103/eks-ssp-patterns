@@ -28,16 +28,22 @@ export default class NginxIngressConstruct extends cdk.Construct {
             new team.TeamBurnhamSetup(scope)
         ];
 
-        const subZoneName = valueFromContext(scope, "dev.sub-zone.name", "dev.some.example.com");
+        const subdomain= valueFromContext(scope, "dev.subzone.name", "dev.some.example.com");
+        const parentDnsAccountId = this.node.tryGetContext("parent.dns.account")!;
+        const parentDomain = valueFromContext(this, "parent.hosted-zone.name", "some.example.com");
         // AddOns for the cluster.
         const addOns: Array<ssp.ClusterAddOn> = [
             new ssp.AwsLoadBalancerControllerAddOn,
             new ssp.addons.ExternalDnsAddon({
-                hostedZone: (clusterInfo: ClusterInfo) => {
-                    return [route53.HostedZone.fromLookup(clusterInfo.cluster.stack, "dns-sub-zone", { domainName: subZoneName })];
-                }  
+                hostedZone: new ssp.addons.DelegatingHostedZoneProvider(
+                    parentDomain,
+                    subdomain, 
+                    parentDnsAccountId,
+                    'DomainOperatorRole', 
+                    true
+                )
             }),
-            new ssp.NginxAddOn({ internetFacing: true, backendProtocol: "tcp", externaDnsHostname: subZoneName }),
+            new ssp.NginxAddOn({ internetFacing: true, backendProtocol: "tcp", externaDnsHostname: subdomain }),
             new ssp.ArgoCDAddOn,
             new ssp.CalicoAddOn,
             new ssp.MetricsServerAddOn,
@@ -55,47 +61,3 @@ export default class NginxIngressConstruct extends cdk.Construct {
     }
 }
 
-/**
- * Stack creates Route 53 configuration.
- */
-export class Nginx extends cdk.Stack {
-
-    public subZone: route53.IHostedZone;
-
-    constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
-        super(scope, id, props);
-
-        const parentDnsAccountId = this.node.tryGetContext("parent.dns.account")!;
-        const subZoneName = valueFromContext(this, "dev.subzone", "dev.some.example.com");
-
-        this.subZone = new route53.PublicHostedZone(this, 'SubZone', {
-            zoneName: subZoneName
-        });
-
-        this.exportValue(this.subZone.hostedZoneArn);
-
-        const parentHostedZoneName = valueFromContext(this, "parent.hosted-zone.name", "some.example.com");
-
-        // 
-        // import the delegation role by constructing the roleArn.
-        // Assuming the parent account has the delegating role DomainOperatorRole with 
-        // trust relationship setup to the child account.
-        //
-        const delegationRoleArn = Stack.of(this).formatArn({
-            region: '', // IAM is global in each partition
-            service: 'iam',
-            account: parentDnsAccountId,
-            resource: 'role',
-            resourceName: 'DomainOperatorRole',
-        });
-
-        const delegationRole = iam.Role.fromRoleArn(this, 'DelegationRole', delegationRoleArn);
-
-        // create the record
-        new route53.CrossAccountZoneDelegationRecord(this, 'delegate', {
-            delegatedZone: this.subZone,
-            parentHostedZoneName: parentHostedZoneName, // or you can use parentHostedZoneId
-            delegationRole,
-        });
-    }
-}
