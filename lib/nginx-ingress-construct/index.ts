@@ -30,7 +30,7 @@ export default class NginxIngressConstruct extends cdk.Construct {
 
         const subdomain= valueFromContext(scope, "dev.subzone.name", "dev.some.example.com");
         const parentDnsAccountId = this.node.tryGetContext("parent.dns.account")!;
-        const parentDomain = valueFromContext(this, "parent.hosted-zone.name", "some.example.com");
+        const parentDomain = valueFromContext(this, "parent.hostedzone.name", "some.example.com");
         // AddOns for the cluster.
         const addOns: Array<ssp.ClusterAddOn> = [
             new ssp.AwsLoadBalancerControllerAddOn,
@@ -43,7 +43,7 @@ export default class NginxIngressConstruct extends cdk.Construct {
                     true
                 )
             }),
-            new ssp.NginxAddOn({ internetFacing: true, backendProtocol: "tcp", externaDnsHostname: subdomain }),
+            new ssp.NginxAddOn({ internetFacing: true, backendProtocol: "tcp", externaDnsHostname: subdomain, crossZoneEnabled: false }),
             new ssp.ArgoCDAddOn,
             new ssp.CalicoAddOn,
             new ssp.MetricsServerAddOn,
